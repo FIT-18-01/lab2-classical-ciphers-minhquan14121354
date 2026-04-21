@@ -6,7 +6,7 @@
 
 using namespace std;
 
-bool is_valid_message(const string &text) {
+bool is_valid_message(const string& text) {
     for (char c : text) {
         if (!isalpha(static_cast<unsigned char>(c)) && c != ' ') {
             return false;
@@ -15,7 +15,7 @@ bool is_valid_message(const string &text) {
     return true;
 }
 
-string rail_fence_encrypt(const string &plaintext, int rails) {
+string rail_fence_encrypt(const string& plaintext, int rails) {
     if (rails <= 1 || plaintext.empty()) return plaintext;
 
     vector<string> fence(rails, "");
@@ -30,16 +30,49 @@ string rail_fence_encrypt(const string &plaintext, int rails) {
     }
 
     string ciphertext;
-    for (const string &row : fence) ciphertext += row;
+    for (const string& row : fence) ciphertext += row;
     return ciphertext;
 }
 
-string rail_fence_decrypt(const string &ciphertext, int rails) {
-    // TODO(student): Q5
-    return ciphertext;
+string rail_fence_decrypt(const string& ciphertext, int rails) {
+    if (rails <= 1 || ciphertext.empty()) return ciphertext;
+
+    int n = static_cast<int>(ciphertext.size());
+    // Determine the rail index for each character in the plaintext order
+    vector<int> rail_index(n);
+    int rail = 0;
+    int direction = 1;
+    for (int i = 0; i < n; ++i) {
+        rail_index[i] = rail;
+        rail += direction;
+        if (rail == rails - 1 || rail == 0) direction = -direction;
+    }
+
+    // Count how many characters go to each rail
+    vector<int> count(rails, 0);
+    for (int idx : rail_index) count[idx]++;
+
+    // Fill rails with characters from ciphertext in order
+    vector<string> fence(rails);
+    int pos = 0;
+    for (int r = 0; r < rails; ++r) {
+        fence[r] = ciphertext.substr(pos, count[r]);
+        pos += count[r];
+    }
+
+    // Reconstruct plaintext by taking chars from each rail in the zig-zag order
+    vector<int> take_index(rails, 0);
+    string plaintext;
+    plaintext.reserve(n);
+    for (int i = 0; i < n; ++i) {
+        int r = rail_index[i];
+        plaintext += fence[r][take_index[r]++];
+    }
+
+    return plaintext;
 }
 
-string read_message_from_file(const string &path) {
+string read_message_from_file(const string& path) {
     ifstream fin(path);
     string line;
     getline(fin, line);
@@ -60,7 +93,8 @@ int main() {
     if (choice == 3) {
         message = read_message_from_file("data/input.txt");
         cout << "Message from file: " << message << "\n";
-    } else {
+    }
+    else {
         cout << "Enter message: ";
         getline(cin, message);
     }
@@ -75,9 +109,11 @@ int main() {
 
     if (choice == 1 || choice == 3) {
         cout << "Ciphertext: " << rail_fence_encrypt(message, rails) << "\n";
-    } else if (choice == 2) {
+    }
+    else if (choice == 2) {
         cout << "Plaintext: " << rail_fence_decrypt(message, rails) << "\n";
-    } else {
+    }
+    else {
         cout << "Invalid choice.\n";
     }
 
